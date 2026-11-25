@@ -140,10 +140,10 @@ fun ArCanvasApp(vm: CanvasViewModel) {
             enter = fadeIn(motion(reduceMotion)),
             exit = fadeOut(motion(reduceMotion)),
             modifier =
-                Modifier
-                    .align(Alignment.TopCenter)
-                    .windowInsetsPadding(WindowInsets.displayCutout)
-                    .padding(top = 4.dp),
+            Modifier
+                .align(Alignment.TopCenter)
+                .windowInsetsPadding(WindowInsets.displayCutout)
+                .padding(top = 4.dp),
         ) {
             Island(vm, reduceMotion)
         }
@@ -161,37 +161,37 @@ private fun DrawingSurface(vm: CanvasViewModel) {
 
     Canvas(
         modifier =
-            Modifier
-                .fillMaxSize()
-                .semantics { contentDescription = "Drawing canvas" }
-                .pointerInput(vm) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val pressedCount = event.changes.count { it.pressed }
-                            for (change in event.changes) {
-                                // Mouse: primary button only. Touch and stylus always draw.
-                                if (change.type == PointerType.Mouse && !event.buttons.isPrimaryPressed) continue
-                                if (change.changedToDown()) {
-                                    if (pressedCount == 1) {
-                                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                                    }
-                                    vm.onDown(change.position.x, change.position.y)
-                                    change.consume()
-                                } else if (change.pressed && change.positionChanged()) {
-                                    vm.onMove(
-                                        change.previousPosition.x,
-                                        change.previousPosition.y,
-                                        change.position.x,
-                                        change.position.y,
-                                    )
-                                    change.consume()
+        Modifier
+            .fillMaxSize()
+            .semantics { contentDescription = "Drawing canvas" }
+            .pointerInput(vm) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val pressedCount = event.changes.count { it.pressed }
+                        for (change in event.changes) {
+                            // Mouse: primary button only. Touch and stylus always draw.
+                            if (change.type == PointerType.Mouse && !event.buttons.isPrimaryPressed) continue
+                            if (change.changedToDown()) {
+                                if (pressedCount == 1) {
+                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                 }
+                                vm.onDown(change.position.x, change.position.y)
+                                change.consume()
+                            } else if (change.pressed && change.positionChanged()) {
+                                vm.onMove(
+                                    change.previousPosition.x,
+                                    change.previousPosition.y,
+                                    change.position.x,
+                                    change.position.y,
+                                )
+                                change.consume()
                             }
                         }
                     }
                 }
-                .onSizeChanged { vm.ensureSize(it.width, it.height, density) },
+            }
+            .onSizeChanged { vm.ensureSize(it.width, it.height, density) },
     ) {
         @Suppress("UNUSED_VARIABLE")
         val redrawTick = vm.version // reading it makes every stroke redraw this surface
@@ -205,15 +205,15 @@ private fun DrawingSurface(vm: CanvasViewModel) {
 private fun Header(vm: CanvasViewModel) {
     Row(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(Tokens.Paper.copy(alpha = 0.94f))
-                .drawBehind {
-                    val h = 2.dp.toPx()
-                    drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
-                }
-                .windowInsetsPadding(WindowInsets.displayCutout)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+        Modifier
+            .fillMaxWidth()
+            .background(Tokens.Paper.copy(alpha = 0.94f))
+            .drawBehind {
+                val h = 2.dp.toPx()
+                drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
+            }
+            .windowInsetsPadding(WindowInsets.displayCutout)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -227,11 +227,11 @@ private fun Header(vm: CanvasViewModel) {
             onClick = vm::toggleFocus,
             description = "Enter focus mode",
             modifier =
-                Modifier
-                    .heightIn(min = TouchMin)
-                    .clip(shape)
-                    .background(Tokens.Ink)
-                    .border(2.dp, Tokens.Ink, shape),
+            Modifier
+                .heightIn(min = TouchMin)
+                .clip(shape)
+                .background(Tokens.Ink)
+                .border(2.dp, Tokens.Ink, shape),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             ringColor = Tokens.Paper,
         ) {
@@ -306,25 +306,25 @@ private fun Toolbar(
     val base = if (vertical) Modifier else Modifier.fillMaxWidth()
     Box(
         modifier =
-            base
-                .clip(shape)
-                .background(Tokens.Paper.copy(alpha = 0.96f))
-                .drawBehind {
-                    val t = 2.dp.toPx()
-                    drawRect(Tokens.Ink, Offset.Zero, Size(size.width, t)) // top edge
-                    if (vertical) {
-                        drawRect(Tokens.Ink, Offset(0f, size.height - t), Size(size.width, t)) // bottom edge
-                        drawRect(Tokens.Ink, Offset(size.width - t, 0f), Size(t, size.height)) // right edge
-                    }
+        base
+            .clip(shape)
+            .background(Tokens.Paper.copy(alpha = 0.96f))
+            .drawBehind {
+                val t = 2.dp.toPx()
+                drawRect(Tokens.Ink, Offset.Zero, Size(size.width, t)) // top edge
+                if (vertical) {
+                    drawRect(Tokens.Ink, Offset(0f, size.height - t), Size(size.width, t)) // bottom edge
+                    drawRect(Tokens.Ink, Offset(size.width - t, 0f), Size(t, size.height)) // right edge
                 }
-                .windowInsetsPadding(WindowInsets.displayCutout)
-                .padding(
-                    if (vertical) {
-                        PaddingValues(horizontal = 10.dp, vertical = 18.dp)
-                    } else {
-                        PaddingValues(start = 8.dp, end = 8.dp, top = 10.dp, bottom = 14.dp)
-                    },
-                ),
+            }
+            .windowInsetsPadding(WindowInsets.displayCutout)
+            .padding(
+                if (vertical) {
+                    PaddingValues(horizontal = 10.dp, vertical = 18.dp)
+                } else {
+                    PaddingValues(start = 8.dp, end = 8.dp, top = 10.dp, bottom = 14.dp)
+                },
+            ),
         contentAlignment = Alignment.Center,
     ) {
         if (vertical) {
@@ -356,12 +356,12 @@ private fun ToolGroup(
             BasicText(
                 text = label.uppercase(),
                 style =
-                    TextStyle(
-                        color = Tokens.Soft,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp,
-                    ),
+                TextStyle(
+                    color = Tokens.Soft,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.8.sp,
+                ),
             )
             content()
         }
@@ -396,17 +396,17 @@ private fun Slot(
         description = description,
         stateText = if (selected) "Selected" else null,
         modifier =
-            Modifier
-                .size(TouchMin)
-                .clip(shape)
-                .background(if (selected) Tokens.Paper2 else Tokens.Paper.copy(alpha = 0f))
-                .border(2.dp, if (selected) Tokens.Ink else Tokens.Edge, shape)
-                .drawBehind {
-                    if (selected) {
-                        val h = 4.dp.toPx()
-                        drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
-                    }
-                },
+        Modifier
+            .size(TouchMin)
+            .clip(shape)
+            .background(if (selected) Tokens.Paper2 else Tokens.Paper.copy(alpha = 0f))
+            .border(2.dp, if (selected) Tokens.Ink else Tokens.Edge, shape)
+            .drawBehind {
+                if (selected) {
+                    val h = 4.dp.toPx()
+                    drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
+                }
+            },
     ) { content() }
 }
 
@@ -421,10 +421,10 @@ private fun ActionButton(
         onClick = onClick,
         description = description,
         modifier =
-            Modifier
-                .size(TouchMin)
-                .clip(shape)
-                .border(2.dp, Tokens.Ink, shape),
+        Modifier
+            .size(TouchMin)
+            .clip(shape)
+            .border(2.dp, Tokens.Ink, shape),
     ) { content() }
 }
 
@@ -462,11 +462,11 @@ private fun Island(
     Pressable(
         onClick = vm::toggleFocus,
         description =
-            if (reminder) {
-                "Exit focus mode. You have been drawing for over 10 minutes."
-            } else {
-                "Exit focus mode"
-            },
+        if (reminder) {
+            "Exit focus mode. You have been drawing for over 10 minutes."
+        } else {
+            "Exit focus mode"
+        },
         modifier = Modifier.size(56.dp),
     ) {
         Box(

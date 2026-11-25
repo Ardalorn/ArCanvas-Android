@@ -58,37 +58,37 @@ fun Pressable(
 
     Box(
         modifier =
-            Modifier
-                .graphicsLayer {
-                    val s = if (pressed) 0.92f else 1f
-                    scaleX = s
-                    scaleY = s
+        Modifier
+            .graphicsLayer {
+                val s = if (pressed) 0.92f else 1f
+                scaleX = s
+                scaleY = s
+            }
+            .then(modifier)
+            .drawWithContent {
+                drawContent()
+                if (focused) {
+                    val w = 3.dp.toPx()
+                    drawRoundRect(
+                        color = ringColor,
+                        topLeft = Offset(w / 2, w / 2),
+                        size = Size(size.width - w, size.height - w),
+                        cornerRadius = CornerRadius(4.dp.toPx()),
+                        style = Stroke(w),
+                    )
                 }
-                .then(modifier)
-                .drawWithContent {
-                    drawContent()
-                    if (focused) {
-                        val w = 3.dp.toPx()
-                        drawRoundRect(
-                            color = ringColor,
-                            topLeft = Offset(w / 2, w / 2),
-                            size = Size(size.width - w, size.height - w),
-                            cornerRadius = CornerRadius(4.dp.toPx()),
-                            style = Stroke(w),
-                        )
-                    }
-                }
-                .semantics {
-                    contentDescription = description
-                    if (stateText != null) stateDescription = stateText
-                }
-                .clickable(
-                    interactionSource = source,
-                    indication = null,
-                    role = Role.Button,
-                    onClick = onClick,
-                )
-                .padding(contentPadding),
+            }
+            .semantics {
+                contentDescription = description
+                if (stateText != null) stateDescription = stateText
+            }
+            .clickable(
+                interactionSource = source,
+                indication = null,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .padding(contentPadding),
         contentAlignment = Alignment.Center,
         content = content,
     )
