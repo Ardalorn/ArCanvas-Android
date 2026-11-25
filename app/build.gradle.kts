@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.ardalorn.arcanvas"
-        compileSdk {
+    compileSdk {
         version = release(37) {
             minorApiLevel = 2
         }
