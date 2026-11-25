@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.changedToDown
+import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
@@ -78,15 +79,13 @@ fun ArCanvasApp(vm: CanvasViewModel) {
     val context = LocalContext.current
     val config = LocalConfiguration.current
 
-    val reduceMotion =
-        remember {
-            Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
-        }
-    val screenReaderOn =
-        remember {
-            context.getSystemService(Context.ACCESSIBILITY_SERVICE)
-                .let { it as? AccessibilityManager }?.isTouchExplorationEnabled == true
-        }
+    val reduceMotion = remember {
+        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+    }
+    val screenReaderOn = remember {
+        context.getSystemService(Context.ACCESSIBILITY_SERVICE)
+            .let { it as? AccessibilityManager }?.isTouchExplorationEnabled == true
+    }
     // A side toolbar only when there is room for all of it; landscape phones keep the bottom bar.
     val sideToolbar = config.screenWidthDp > 600 && config.screenHeightDp >= 480
 
@@ -139,8 +138,7 @@ fun ArCanvasApp(vm: CanvasViewModel) {
             visible = vm.focusMode && (vm.islandVisible || screenReaderOn),
             enter = fadeIn(motion(reduceMotion)),
             exit = fadeOut(motion(reduceMotion)),
-            modifier =
-            Modifier
+            modifier = Modifier
                 .align(Alignment.TopCenter)
                 .windowInsetsPadding(WindowInsets.displayCutout)
                 .padding(top = 4.dp),
@@ -160,8 +158,7 @@ private fun DrawingSurface(vm: CanvasViewModel) {
     val image = remember(bitmap) { bitmap?.asImageBitmap() }
 
     Canvas(
-        modifier =
-        Modifier
+        modifier = Modifier
             .fillMaxSize()
             .semantics { contentDescription = "Drawing canvas" }
             .pointerInput(vm) {
@@ -204,8 +201,7 @@ private fun DrawingSurface(vm: CanvasViewModel) {
 @Composable
 private fun Header(vm: CanvasViewModel) {
     Row(
-        modifier =
-        Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .background(Tokens.Paper.copy(alpha = 0.94f))
             .drawBehind {
@@ -226,8 +222,7 @@ private fun Header(vm: CanvasViewModel) {
         Pressable(
             onClick = vm::toggleFocus,
             description = "Enter focus mode",
-            modifier =
-            Modifier
+            modifier = Modifier
                 .heightIn(min = TouchMin)
                 .clip(shape)
                 .background(Tokens.Ink)
@@ -244,16 +239,12 @@ private fun Header(vm: CanvasViewModel) {
 }
 
 @Composable
-private fun Toolbar(
-    vm: CanvasViewModel,
-    vertical: Boolean,
-) {
-    val shape: Shape =
-        if (vertical) {
-            RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
-        } else {
-            RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
-        }
+private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
+    val shape: Shape = if (vertical) {
+        RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
+    } else {
+        RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
+    }
 
     val items: @Composable () -> Unit = {
         ToolGroup("Size", vertical) {
@@ -305,8 +296,7 @@ private fun Toolbar(
 
     val base = if (vertical) Modifier else Modifier.fillMaxWidth()
     Box(
-        modifier =
-        base
+        modifier = base
             .clip(shape)
             .background(Tokens.Paper.copy(alpha = 0.96f))
             .drawBehind {
@@ -343,11 +333,7 @@ private fun Toolbar(
 
 /** A labelled group of tools. The label is only shown in the side toolbar, where there is room. */
 @Composable
-private fun ToolGroup(
-    label: String,
-    vertical: Boolean,
-    content: @Composable () -> Unit,
-) {
+private fun ToolGroup(label: String, vertical: Boolean, content: @Composable () -> Unit) {
     if (vertical) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -355,8 +341,7 @@ private fun ToolGroup(
         ) {
             BasicText(
                 text = label.uppercase(),
-                style =
-                TextStyle(
+                style = TextStyle(
                     color = Tokens.Soft,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -395,8 +380,7 @@ private fun Slot(
         onClick = onClick,
         description = description,
         stateText = if (selected) "Selected" else null,
-        modifier =
-        Modifier
+        modifier = Modifier
             .size(TouchMin)
             .clip(shape)
             .background(if (selected) Tokens.Paper2 else Tokens.Paper.copy(alpha = 0f))
@@ -411,17 +395,12 @@ private fun Slot(
 }
 
 @Composable
-private fun ActionButton(
-    onClick: () -> Unit,
-    description: String,
-    content: @Composable () -> Unit,
-) {
+private fun ActionButton(onClick: () -> Unit, description: String, content: @Composable () -> Unit) {
     val shape = RoundedCornerShape(4.dp)
     Pressable(
         onClick = onClick,
         description = description,
-        modifier =
-        Modifier
+        modifier = Modifier
             .size(TouchMin)
             .clip(shape)
             .border(2.dp, Tokens.Ink, shape),
@@ -431,38 +410,31 @@ private fun ActionButton(
 // ───────────── Focus-mode island ─────────────
 
 @Composable
-private fun Island(
-    vm: CanvasViewModel,
-    reduceMotion: Boolean,
-) {
+private fun Island(vm: CanvasViewModel, reduceMotion: Boolean) {
     val transition = rememberInfiniteTransition(label = "island")
-    val breathe =
-        transition.animateFloat(
-            initialValue = 0.85f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(3000), RepeatMode.Reverse),
-            label = "breathe",
-        )
-    val pulseAlpha =
-        transition.animateFloat(
-            initialValue = 0.7f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
-            label = "pulse-alpha",
-        )
-    val pulseScale =
-        transition.animateFloat(
-            initialValue = 1f,
-            targetValue = 1.25f,
-            animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
-            label = "pulse-scale",
-        )
+    val breathe = transition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(3000), RepeatMode.Reverse),
+        label = "breathe",
+    )
+    val pulseAlpha = transition.animateFloat(
+        initialValue = 0.7f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
+        label = "pulse-alpha",
+    )
+    val pulseScale = transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
+        label = "pulse-scale",
+    )
     val reminder = vm.sessionPulse
 
     Pressable(
         onClick = vm::toggleFocus,
-        description =
-        if (reminder) {
+        description = if (reminder) {
             "Exit focus mode. You have been drawing for over 10 minutes."
         } else {
             "Exit focus mode"
@@ -473,12 +445,11 @@ private fun Island(
             Modifier
                 .size(width = 32.dp, height = 16.dp)
                 .graphicsLayer {
-                    alpha =
-                        when {
-                            reduceMotion -> 1f
-                            reminder -> pulseAlpha.value
-                            else -> breathe.value
-                        }
+                    alpha = when {
+                        reduceMotion -> 1f
+                        reminder -> pulseAlpha.value
+                        else -> breathe.value
+                    }
                     val s = if (reduceMotion || !reminder) 1f else pulseScale.value
                     scaleX = s
                     scaleY = s
