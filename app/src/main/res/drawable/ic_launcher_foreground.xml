@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- The star stamp, scaled into the adaptive icon's safe zone. -->
+    <group
+        android:scaleX="0.5"
+        android:scaleY="0.5"
+        android:translateX="30.5"
+        android:translateY="29.5">
+        <path
+            android:fillColor="@color/ink"
+            android:pathData="M50,6 Q56,20 58,34 Q75,24 90,30 Q70,42 64,50 Q73,72 78,92 Q60,76 50,68 Q40,80 16,88 Q30,64 34,48 Q14,42 4,32 Q26,34 40,32 Q46,18 50,6 Z" />
+    </group>
+</vector>
