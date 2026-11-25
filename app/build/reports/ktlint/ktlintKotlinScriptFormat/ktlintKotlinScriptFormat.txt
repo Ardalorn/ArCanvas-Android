@@ -1,5 +1,0 @@
-[90m/home/runner/work/ArCanvas-Android/ArCanvas-Android/app/[0mbuild.gradle.kts[90m:[0m73[90m:80:[0m Missing trailing comma before ")" [90m(standard:trailing-comma-on-call-site)[0m
-[90m/home/runner/work/ArCanvas-Android/ArCanvas-Android/app/[0mbuild.gradle.kts[90m:[0m74[90m:10:[0m Missing trailing comma before ")" [90m(standard:trailing-comma-on-call-site)[0m
-
-Summary error count (descending) by rule:
-  standard:trailing-comma-on-call-site: 2
