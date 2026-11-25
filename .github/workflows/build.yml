@@ -32,7 +32,8 @@ jobs:
       contents: write
     env:
       BRANCH: ${{ github.head_ref || github.ref_name }}
-      CAN_PUSH: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      # Dependabot pull requests get a read-only token, so they are treated like fork pull requests: check only.
+      CAN_PUSH: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && github.actor != 'dependabot[bot]' }}
 
     steps:
       - uses: actions/checkout@v7
