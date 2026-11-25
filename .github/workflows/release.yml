@@ -106,8 +106,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet; then
-            git add -A
+          # Only ever commit changes to files that are already tracked. Build output is never added,
+          # and if it was committed by mistake earlier (no .gitignore) it is untracked here.
+          git rm -r -q --cached --ignore-unmatch .gradle .kotlin build app/build
+          git add -u
+          if ! git diff --cached --quiet; then
             git commit -m "Apply ktlint fixes"
           else
             echo "ktlint had nothing to fix."
@@ -130,7 +133,7 @@ jobs:
             sed -i -E "s/(versionName = \")[^\"]*\"/\1${VERSION}\"/; s/(versionCode = )[0-9]+/\1${new_code}/" "$GRADLE_FILE"
           fi
           grep -q "versionName = \"${VERSION}\"" "$GRADLE_FILE" || { echo "::error::versionName was not updated."; exit 1; }
-          if ! git diff --quiet; then
+          if ! git diff --quiet -- "$GRADLE_FILE"; then
             git add "$GRADLE_FILE"
             git commit -m "Release ${TAG}"
           fi
