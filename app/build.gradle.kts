@@ -6,7 +6,11 @@ plugins {
 
 android {
     namespace = "com.ardalorn.arcanvas"
-    compileSdk = 35
+        compileSdk {
+        version = release(37) {
+            minorApiLevel = 2
+        }
+    }
 
     defaultConfig {
         applicationId = "com.ardalorn.arcanvas"
