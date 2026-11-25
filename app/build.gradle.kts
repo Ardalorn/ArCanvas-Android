@@ -64,8 +64,8 @@ ktlint {
     additionalEditorconfig.set(
         mapOf(
             "ktlint_code_style" to "intellij_idea",
-            "ktlint_function_naming_ignore_when_annotated_with" to "Composable"
-        )
+            "ktlint_function_naming_ignore_when_annotated_with" to "Composable",
+        ),
     )
 }
 
