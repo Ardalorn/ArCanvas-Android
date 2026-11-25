@@ -1,0 +1,33 @@
+# Weekly dependency update pull requests. Each one runs the Build workflow, so a bad update shows up red.
+version: 2
+
+updates:
+  # Gradle: plugins (Android Gradle Plugin, Kotlin, ktlint) and libraries in the build files.
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 5
+    labels: [dependencies]
+    groups:
+      # The Kotlin plugin and the Compose compiler plugin must always have the same version.
+      kotlin:
+        patterns: ["org.jetbrains.kotlin*"]
+      androidx:
+        patterns: ["androidx.*"]
+
+  # The actions used in the workflows (checkout, setup-java, setup-gradle, upload-artifact).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/London
+    labels: [dependencies]
+    groups:
+      actions:
+        patterns: ["*"]
