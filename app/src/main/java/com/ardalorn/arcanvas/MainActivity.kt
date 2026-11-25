@@ -10,7 +10,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
 class MainActivity : ComponentActivity() {
-
     private val canvasViewModel: CanvasViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,9 +17,10 @@ class MainActivity : ComponentActivity() {
 
         // Draw edge to edge, including behind a camera cutout.
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.attributes = window.attributes.apply {
-            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
+        window.attributes =
+            window.attributes.apply {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
         hideSystemBars()
 
         setContent { ArCanvasApp(canvasViewModel) }

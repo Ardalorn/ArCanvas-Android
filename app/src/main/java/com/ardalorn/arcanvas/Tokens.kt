@@ -14,23 +14,25 @@ object Tokens {
 data class Swatch(val name: String, val color: Color)
 
 /** First swatch is the theme ink; the rest are the fixed pastels from the web version. */
-val Swatches = listOf(
-    Swatch("Ink", Tokens.Ink),
-    Swatch("Sage", Color(0xFF8FA882)),
-    Swatch("Slate", Color(0xFF7B91A3)),
-    Swatch("Terracotta", Color(0xFFC98B7A)),
-    Swatch("Ochre", Color(0xFFD1B47E)),
-    Swatch("Lavender", Color(0xFFA599B5)),
-)
+val Swatches =
+    listOf(
+        Swatch("Ink", Tokens.Ink),
+        Swatch("Sage", Color(0xFF8FA882)),
+        Swatch("Slate", Color(0xFF7B91A3)),
+        Swatch("Terracotta", Color(0xFFC98B7A)),
+        Swatch("Ochre", Color(0xFFD1B47E)),
+        Swatch("Lavender", Color(0xFFA599B5)),
+    )
 
 data class BrushSize(val name: String, val strokeDp: Float, val dotDp: Float, val stampDp: Float)
 
-val BrushSizes = listOf(
-    BrushSize("small", strokeDp = 6f, dotDp = 6f, stampDp = 40f),
-    BrushSize("medium", strokeDp = 16f, dotDp = 14f, stampDp = 64f),
-    BrushSize("large", strokeDp = 32f, dotDp = 24f, stampDp = 92f),
-    BrushSize("extra large", strokeDp = 48f, dotDp = 36f, stampDp = 130f),
-)
+val BrushSizes =
+    listOf(
+        BrushSize("small", strokeDp = 6f, dotDp = 6f, stampDp = 40f),
+        BrushSize("medium", strokeDp = 16f, dotDp = 14f, stampDp = 64f),
+        BrushSize("large", strokeDp = 32f, dotDp = 24f, stampDp = 92f),
+        BrushSize("extra large", strokeDp = 48f, dotDp = 36f, stampDp = 130f),
+    )
 
 const val DEFAULT_SIZE_INDEX = 1
 

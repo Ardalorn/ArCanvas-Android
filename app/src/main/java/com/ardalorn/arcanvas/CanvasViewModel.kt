@@ -32,7 +32,6 @@ import kotlin.random.Random
  * configuration change keeps both the picture and Focus mode exactly as they were.
  */
 class CanvasViewModel(app: Application) : AndroidViewModel(app) {
-
     enum class Tool { BRUSH, ERASER, STAMP }
 
     var sizeIndex by mutableIntStateOf(DEFAULT_SIZE_INDEX)
@@ -66,29 +65,33 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
     private var surface: Canvas? = null
     private var density = 1f
 
-    private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
-    }
+    private val strokePaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
-        strokeWidth = 4f
-        color = android.graphics.Color.argb(89, 61, 64, 74) // rgba(61,64,74,0.35)
-    }
-    private val detailFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-        color = DETAIL_COLOR
-    }
-    private val detailStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        strokeWidth = 2.5f
-        color = DETAIL_COLOR
-    }
+    private val outlinePaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+            strokeWidth = 4f
+            color = android.graphics.Color.argb(89, 61, 64, 74) // rgba(61,64,74,0.35)
+        }
+    private val detailFill =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = DETAIL_COLOR
+        }
+    private val detailStroke =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeCap = Paint.Cap.ROUND
+            strokeWidth = 2.5f
+            color = DETAIL_COLOR
+        }
     private val clearMode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
 
     init {
@@ -101,7 +104,11 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
     // ───────────── Surface ─────────────
 
     /** Called with the drawing area's size in pixels. Resizing stretches the old picture, as the web version did. */
-    fun ensureSize(width: Int, height: Int, density: Float) {
+    fun ensureSize(
+        width: Int,
+        height: Int,
+        density: Float,
+    ) {
         if (width <= 0 || height <= 0) return
         this.density = density
         val old = bitmap
@@ -165,7 +172,10 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
 
     // ───────────── Drawing ─────────────
 
-    fun onDown(x: Float, y: Float) {
+    fun onDown(
+        x: Float,
+        y: Float,
+    ) {
         val c = surface ?: return
         ping()
         if (tool == Tool.STAMP) {
@@ -177,7 +187,12 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
         version++
     }
 
-    fun onMove(fromX: Float, fromY: Float, toX: Float, toY: Float) {
+    fun onMove(
+        fromX: Float,
+        fromY: Float,
+        toX: Float,
+        toY: Float,
+    ) {
         if (tool == Tool.STAMP) return
         val c = surface ?: return
         ping()
@@ -202,7 +217,11 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun placeStamp(c: Canvas, x: Float, y: Float) {
+    private fun placeStamp(
+        c: Canvas,
+        x: Float,
+        y: Float,
+    ) {
         val def = Stamps.all[stampIndex]
         val scale = BrushSizes[sizeIndex].stampDp * density / 100f
         val jitterDegrees = Math.toDegrees(((Random.nextFloat() - 0.5f) * 0.5f).toDouble()).toFloat()
@@ -219,27 +238,32 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
         c.restore()
     }
 
-    private fun drawStampDetail(c: Canvas, name: String) {
+    private fun drawStampDetail(
+        c: Canvas,
+        name: String,
+    ) {
         when (name) {
             "happy face" -> {
                 oval(c, 36f, 42f, 5f, 6f, 0f)
                 oval(c, 63f, 39f, 4.5f, 5.5f, 0f)
-                val smile = Path().apply {
-                    moveTo(34f, 58f)
-                    quadTo(50f, 74f, 66f, 54f)
-                }
+                val smile =
+                    Path().apply {
+                        moveTo(34f, 58f)
+                        quadTo(50f, 74f, 66f, 54f)
+                    }
                 c.drawPath(smile, detailStroke)
             }
 
             "cat" -> {
                 oval(c, 37f, 50f, 4f, 5.5f, -0.15f)
                 oval(c, 62f, 49f, 4f, 5.5f, 0.15f)
-                val nose = Path().apply {
-                    moveTo(50f, 60f)
-                    lineTo(46f, 66f)
-                    lineTo(54f, 66f)
-                    close()
-                }
+                val nose =
+                    Path().apply {
+                        moveTo(50f, 60f)
+                        lineTo(46f, 66f)
+                        lineTo(54f, 66f)
+                        close()
+                    }
                 c.drawPath(nose, detailFill)
                 c.drawLine(20f, 58f, 2f, 54f, detailStroke)
                 c.drawLine(18f, 66f, 0f, 68f, detailStroke)
@@ -249,7 +273,14 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun oval(c: Canvas, cx: Float, cy: Float, rx: Float, ry: Float, rotationRadians: Float) {
+    private fun oval(
+        c: Canvas,
+        cx: Float,
+        cy: Float,
+        rx: Float,
+        ry: Float,
+        rotationRadians: Float,
+    ) {
         c.save()
         c.translate(cx, cy)
         c.rotate(Math.toDegrees(rotationRadians.toDouble()).toFloat())
@@ -268,8 +299,9 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
             drawBitmap(source, 0f, 0f, null)
         }
         val app = getApplication<Application>()
-        val name = "calm-canvas-" +
-            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".png"
+        val name =
+            "calm-canvas-" +
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".png"
 
         viewModelScope.launch(Dispatchers.IO) {
             val saved = writePng(app, flat, name)
@@ -280,19 +312,25 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun writePng(app: Application, image: Bitmap, name: String): Boolean {
+    private fun writePng(
+        app: Application,
+        image: Bitmap,
+        name: String,
+    ): Boolean {
         val resolver = app.contentResolver
-        val values = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, name)
-            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/ArCanvas")
-            put(MediaStore.Images.Media.IS_PENDING, 1)
-        }
+        val values =
+            ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, name)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/ArCanvas")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
         val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return false
         return try {
-            val written = resolver.openOutputStream(uri)?.use { stream ->
-                image.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            } ?: false
+            val written =
+                resolver.openOutputStream(uri)?.use { stream ->
+                    image.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                } ?: false
             if (!written) {
                 resolver.delete(uri, null, null)
                 false

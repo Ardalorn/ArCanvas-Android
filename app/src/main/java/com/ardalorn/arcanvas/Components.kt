@@ -57,37 +57,38 @@ fun Pressable(
     val focused by source.collectIsFocusedAsState()
 
     Box(
-        modifier = Modifier
-            .graphicsLayer {
-                val s = if (pressed) 0.92f else 1f
-                scaleX = s
-                scaleY = s
-            }
-            .then(modifier)
-            .drawWithContent {
-                drawContent()
-                if (focused) {
-                    val w = 3.dp.toPx()
-                    drawRoundRect(
-                        color = ringColor,
-                        topLeft = Offset(w / 2, w / 2),
-                        size = Size(size.width - w, size.height - w),
-                        cornerRadius = CornerRadius(4.dp.toPx()),
-                        style = Stroke(w),
-                    )
+        modifier =
+            Modifier
+                .graphicsLayer {
+                    val s = if (pressed) 0.92f else 1f
+                    scaleX = s
+                    scaleY = s
                 }
-            }
-            .semantics {
-                contentDescription = description
-                if (stateText != null) stateDescription = stateText
-            }
-            .clickable(
-                interactionSource = source,
-                indication = null,
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .padding(contentPadding),
+                .then(modifier)
+                .drawWithContent {
+                    drawContent()
+                    if (focused) {
+                        val w = 3.dp.toPx()
+                        drawRoundRect(
+                            color = ringColor,
+                            topLeft = Offset(w / 2, w / 2),
+                            size = Size(size.width - w, size.height - w),
+                            cornerRadius = CornerRadius(4.dp.toPx()),
+                            style = Stroke(w),
+                        )
+                    }
+                }
+                .semantics {
+                    contentDescription = description
+                    if (stateText != null) stateDescription = stateText
+                }
+                .clickable(
+                    interactionSource = source,
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onClick,
+                )
+                .padding(contentPadding),
         contentAlignment = Alignment.Center,
         content = content,
     )
@@ -102,9 +103,10 @@ fun PathIcon(
     strokeUnits: Float,
     tint: Color = Tokens.Ink,
 ) {
-    val paths = remember(pathData) {
-        pathData.mapNotNull { PathParser.createPathFromPathData(it)?.asComposePath() }
-    }
+    val paths =
+        remember(pathData) {
+            pathData.mapNotNull { PathParser.createPathFromPathData(it)?.asComposePath() }
+        }
     Canvas(Modifier.size(iconSize)) {
         val k = this.size.minDimension / viewBox
         scale(k, pivot = Offset.Zero) {
@@ -120,14 +122,17 @@ fun PathIcon(
 }
 
 object IconPaths {
-    val Eraser = listOf(
-        "m19.5 12-6 6a2.12 2.12 0 0 1-3 0L6 13.5a2.12 2.12 0 0 1 0-3l6-6a2.12 2.12 0 0 1 3 0l4.5 4.5a2.12 2.12 0 0 1 0 3Z",
-        "M9 15l-4 4",
-    )
-    val Trash = listOf(
-        "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14Z",
-    )
-    val Download = listOf(
-        "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
-    )
+    val Eraser =
+        listOf(
+            "m19.5 12-6 6a2.12 2.12 0 0 1-3 0L6 13.5a2.12 2.12 0 0 1 0-3l6-6a2.12 2.12 0 0 1 3 0l4.5 4.5a2.12 2.12 0 0 1 0 3Z",
+            "M9 15l-4 4",
+        )
+    val Trash =
+        listOf(
+            "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14Z",
+        )
+    val Download =
+        listOf(
+            "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
+        )
 }

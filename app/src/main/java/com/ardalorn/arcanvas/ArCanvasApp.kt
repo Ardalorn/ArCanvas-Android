@@ -78,13 +78,15 @@ fun ArCanvasApp(vm: CanvasViewModel) {
     val context = LocalContext.current
     val config = LocalConfiguration.current
 
-    val reduceMotion = remember {
-        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
-    }
-    val screenReaderOn = remember {
-        context.getSystemService(Context.ACCESSIBILITY_SERVICE)
-            .let { it as? AccessibilityManager }?.isTouchExplorationEnabled == true
-    }
+    val reduceMotion =
+        remember {
+            Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+        }
+    val screenReaderOn =
+        remember {
+            context.getSystemService(Context.ACCESSIBILITY_SERVICE)
+                .let { it as? AccessibilityManager }?.isTouchExplorationEnabled == true
+        }
     // A side toolbar only when there is room for all of it; landscape phones keep the bottom bar.
     val sideToolbar = config.screenWidthDp > 600 && config.screenHeightDp >= 480
 
@@ -137,10 +139,11 @@ fun ArCanvasApp(vm: CanvasViewModel) {
             visible = vm.focusMode && (vm.islandVisible || screenReaderOn),
             enter = fadeIn(motion(reduceMotion)),
             exit = fadeOut(motion(reduceMotion)),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .windowInsetsPadding(WindowInsets.displayCutout)
-                .padding(top = 4.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.displayCutout)
+                    .padding(top = 4.dp),
         ) {
             Island(vm, reduceMotion)
         }
@@ -157,37 +160,38 @@ private fun DrawingSurface(vm: CanvasViewModel) {
     val image = remember(bitmap) { bitmap?.asImageBitmap() }
 
     Canvas(
-        modifier = Modifier
-            .fillMaxSize()
-            .semantics { contentDescription = "Drawing canvas" }
-            .pointerInput(vm) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val pressedCount = event.changes.count { it.pressed }
-                        for (change in event.changes) {
-                            // Mouse: primary button only. Touch and stylus always draw.
-                            if (change.type == PointerType.Mouse && !event.buttons.isPrimaryPressed) continue
-                            if (change.changedToDown()) {
-                                if (pressedCount == 1) {
-                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .semantics { contentDescription = "Drawing canvas" }
+                .pointerInput(vm) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val pressedCount = event.changes.count { it.pressed }
+                            for (change in event.changes) {
+                                // Mouse: primary button only. Touch and stylus always draw.
+                                if (change.type == PointerType.Mouse && !event.buttons.isPrimaryPressed) continue
+                                if (change.changedToDown()) {
+                                    if (pressedCount == 1) {
+                                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                    }
+                                    vm.onDown(change.position.x, change.position.y)
+                                    change.consume()
+                                } else if (change.pressed && change.positionChanged()) {
+                                    vm.onMove(
+                                        change.previousPosition.x,
+                                        change.previousPosition.y,
+                                        change.position.x,
+                                        change.position.y,
+                                    )
+                                    change.consume()
                                 }
-                                vm.onDown(change.position.x, change.position.y)
-                                change.consume()
-                            } else if (change.pressed && change.positionChanged()) {
-                                vm.onMove(
-                                    change.previousPosition.x,
-                                    change.previousPosition.y,
-                                    change.position.x,
-                                    change.position.y,
-                                )
-                                change.consume()
                             }
                         }
                     }
                 }
-            }
-            .onSizeChanged { vm.ensureSize(it.width, it.height, density) },
+                .onSizeChanged { vm.ensureSize(it.width, it.height, density) },
     ) {
         @Suppress("UNUSED_VARIABLE")
         val redrawTick = vm.version // reading it makes every stroke redraw this surface
@@ -200,15 +204,16 @@ private fun DrawingSurface(vm: CanvasViewModel) {
 @Composable
 private fun Header(vm: CanvasViewModel) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Tokens.Paper.copy(alpha = 0.94f))
-            .drawBehind {
-                val h = 2.dp.toPx()
-                drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
-            }
-            .windowInsetsPadding(WindowInsets.displayCutout)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(Tokens.Paper.copy(alpha = 0.94f))
+                .drawBehind {
+                    val h = 2.dp.toPx()
+                    drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
+                }
+                .windowInsetsPadding(WindowInsets.displayCutout)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -221,11 +226,12 @@ private fun Header(vm: CanvasViewModel) {
         Pressable(
             onClick = vm::toggleFocus,
             description = "Enter focus mode",
-            modifier = Modifier
-                .heightIn(min = TouchMin)
-                .clip(shape)
-                .background(Tokens.Ink)
-                .border(2.dp, Tokens.Ink, shape),
+            modifier =
+                Modifier
+                    .heightIn(min = TouchMin)
+                    .clip(shape)
+                    .background(Tokens.Ink)
+                    .border(2.dp, Tokens.Ink, shape),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             ringColor = Tokens.Paper,
         ) {
@@ -238,12 +244,16 @@ private fun Header(vm: CanvasViewModel) {
 }
 
 @Composable
-private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
-    val shape: Shape = if (vertical) {
-        RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
-    } else {
-        RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
-    }
+private fun Toolbar(
+    vm: CanvasViewModel,
+    vertical: Boolean,
+) {
+    val shape: Shape =
+        if (vertical) {
+            RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
+        } else {
+            RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
+        }
 
     val items: @Composable () -> Unit = {
         ToolGroup("Size", vertical) {
@@ -295,25 +305,26 @@ private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
 
     val base = if (vertical) Modifier else Modifier.fillMaxWidth()
     Box(
-        modifier = base
-            .clip(shape)
-            .background(Tokens.Paper.copy(alpha = 0.96f))
-            .drawBehind {
-                val t = 2.dp.toPx()
-                drawRect(Tokens.Ink, Offset.Zero, Size(size.width, t)) // top edge
-                if (vertical) {
-                    drawRect(Tokens.Ink, Offset(0f, size.height - t), Size(size.width, t)) // bottom edge
-                    drawRect(Tokens.Ink, Offset(size.width - t, 0f), Size(t, size.height)) // right edge
+        modifier =
+            base
+                .clip(shape)
+                .background(Tokens.Paper.copy(alpha = 0.96f))
+                .drawBehind {
+                    val t = 2.dp.toPx()
+                    drawRect(Tokens.Ink, Offset.Zero, Size(size.width, t)) // top edge
+                    if (vertical) {
+                        drawRect(Tokens.Ink, Offset(0f, size.height - t), Size(size.width, t)) // bottom edge
+                        drawRect(Tokens.Ink, Offset(size.width - t, 0f), Size(t, size.height)) // right edge
+                    }
                 }
-            }
-            .windowInsetsPadding(WindowInsets.displayCutout)
-            .padding(
-                if (vertical) {
-                    PaddingValues(horizontal = 10.dp, vertical = 18.dp)
-                } else {
-                    PaddingValues(start = 8.dp, end = 8.dp, top = 10.dp, bottom = 14.dp)
-                },
-            ),
+                .windowInsetsPadding(WindowInsets.displayCutout)
+                .padding(
+                    if (vertical) {
+                        PaddingValues(horizontal = 10.dp, vertical = 18.dp)
+                    } else {
+                        PaddingValues(start = 8.dp, end = 8.dp, top = 10.dp, bottom = 14.dp)
+                    },
+                ),
         contentAlignment = Alignment.Center,
     ) {
         if (vertical) {
@@ -332,7 +343,11 @@ private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
 
 /** A labelled group of tools. The label is only shown in the side toolbar, where there is room. */
 @Composable
-private fun ToolGroup(label: String, vertical: Boolean, content: @Composable () -> Unit) {
+private fun ToolGroup(
+    label: String,
+    vertical: Boolean,
+    content: @Composable () -> Unit,
+) {
     if (vertical) {
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -340,12 +355,13 @@ private fun ToolGroup(label: String, vertical: Boolean, content: @Composable () 
         ) {
             BasicText(
                 text = label.uppercase(),
-                style = TextStyle(
-                    color = Tokens.Soft,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.8.sp,
-                ),
+                style =
+                    TextStyle(
+                        color = Tokens.Soft,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
+                    ),
             )
             content()
         }
@@ -379,76 +395,90 @@ private fun Slot(
         onClick = onClick,
         description = description,
         stateText = if (selected) "Selected" else null,
-        modifier = Modifier
-            .size(TouchMin)
-            .clip(shape)
-            .background(if (selected) Tokens.Paper2 else Tokens.Paper.copy(alpha = 0f))
-            .border(2.dp, if (selected) Tokens.Ink else Tokens.Edge, shape)
-            .drawBehind {
-                if (selected) {
-                    val h = 4.dp.toPx()
-                    drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
-                }
-            },
+        modifier =
+            Modifier
+                .size(TouchMin)
+                .clip(shape)
+                .background(if (selected) Tokens.Paper2 else Tokens.Paper.copy(alpha = 0f))
+                .border(2.dp, if (selected) Tokens.Ink else Tokens.Edge, shape)
+                .drawBehind {
+                    if (selected) {
+                        val h = 4.dp.toPx()
+                        drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
+                    }
+                },
     ) { content() }
 }
 
 @Composable
-private fun ActionButton(onClick: () -> Unit, description: String, content: @Composable () -> Unit) {
+private fun ActionButton(
+    onClick: () -> Unit,
+    description: String,
+    content: @Composable () -> Unit,
+) {
     val shape = RoundedCornerShape(4.dp)
     Pressable(
         onClick = onClick,
         description = description,
-        modifier = Modifier
-            .size(TouchMin)
-            .clip(shape)
-            .border(2.dp, Tokens.Ink, shape),
+        modifier =
+            Modifier
+                .size(TouchMin)
+                .clip(shape)
+                .border(2.dp, Tokens.Ink, shape),
     ) { content() }
 }
 
 // ───────────── Focus-mode island ─────────────
 
 @Composable
-private fun Island(vm: CanvasViewModel, reduceMotion: Boolean) {
+private fun Island(
+    vm: CanvasViewModel,
+    reduceMotion: Boolean,
+) {
     val transition = rememberInfiniteTransition(label = "island")
-    val breathe = transition.animateFloat(
-        initialValue = 0.85f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(3000), RepeatMode.Reverse),
-        label = "breathe",
-    )
-    val pulseAlpha = transition.animateFloat(
-        initialValue = 0.7f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
-        label = "pulse-alpha",
-    )
-    val pulseScale = transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.25f,
-        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
-        label = "pulse-scale",
-    )
+    val breathe =
+        transition.animateFloat(
+            initialValue = 0.85f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(3000), RepeatMode.Reverse),
+            label = "breathe",
+        )
+    val pulseAlpha =
+        transition.animateFloat(
+            initialValue = 0.7f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
+            label = "pulse-alpha",
+        )
+    val pulseScale =
+        transition.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.25f,
+            animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
+            label = "pulse-scale",
+        )
     val reminder = vm.sessionPulse
 
     Pressable(
         onClick = vm::toggleFocus,
-        description = if (reminder) {
-            "Exit focus mode. You have been drawing for over 10 minutes."
-        } else {
-            "Exit focus mode"
-        },
+        description =
+            if (reminder) {
+                "Exit focus mode. You have been drawing for over 10 minutes."
+            } else {
+                "Exit focus mode"
+            },
         modifier = Modifier.size(56.dp),
     ) {
         Box(
             Modifier
                 .size(width = 32.dp, height = 16.dp)
                 .graphicsLayer {
-                    alpha = when {
-                        reduceMotion -> 1f
-                        reminder -> pulseAlpha.value
-                        else -> breathe.value
-                    }
+                    alpha =
+                        when {
+                            reduceMotion -> 1f
+                            reminder -> pulseAlpha.value
+                            else -> breathe.value
+                        }
                     val s = if (reduceMotion || !reminder) 1f else pulseScale.value
                     scaleX = s
                     scaleY = s
