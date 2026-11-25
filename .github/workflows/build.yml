@@ -58,10 +58,13 @@ jobs:
       - name: Commit ktlint fixes
         if: env.CAN_PUSH == 'true'
         run: |
-          if ! git diff --quiet; then
+          # Only ever commit changes to files that are already tracked. Build output is never added,
+          # and if it was committed by mistake earlier (no .gitignore) it is untracked here.
+          git rm -r -q --cached --ignore-unmatch .gradle .kotlin build app/build
+          git add -u
+          if ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
             git commit -m "Apply ktlint fixes"
             git push origin "HEAD:refs/heads/${BRANCH}"
           else
