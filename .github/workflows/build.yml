@@ -48,6 +48,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
+          # Sends the dependency list to GitHub (Insights > Dependency graph). Skipped for fork pull requests.
+          dependency-graph: ${{ env.CAN_PUSH == 'true' && 'generate-and-submit' || 'disabled' }}
 
       # Step 1: auto-fix what ktlint can fix, and save the fixes to the repo.
       - name: ktlint auto-fix
