@@ -38,9 +38,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -64,7 +70,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -101,49 +106,55 @@ fun ArCanvasApp(vm: CanvasViewModel) {
         }
     }
 
-    Box(Modifier.fillMaxSize().background(Tokens.Paper)) {
-        DrawingSurface(vm)
+    // The drawing's "Ink" swatch and the saved PNG's paper follow the Material You palette.
+    val colors = MaterialTheme.colorScheme
+    SideEffect { vm.applyPalette(paper = colors.background, ink = colors.onSurface) }
 
-        AnimatedVisibility(
-            visible = !vm.focusMode,
-            enter = slideInVertically(motion<IntOffset>(reduceMotion)) { -it } + fadeIn(motion(reduceMotion)),
-            exit = slideOutVertically(motion<IntOffset>(reduceMotion)) { -it } + fadeOut(motion(reduceMotion)),
-            modifier = Modifier.align(Alignment.TopCenter),
-        ) {
-            Header(vm)
-        }
+    Surface(Modifier.fillMaxSize(), color = colors.background, contentColor = colors.onBackground) {
+        Box(Modifier.fillMaxSize()) {
+            DrawingSurface(vm)
 
-        if (sideToolbar) {
             AnimatedVisibility(
                 visible = !vm.focusMode,
-                enter = slideInHorizontally(motion<IntOffset>(reduceMotion)) { -it } + fadeIn(motion(reduceMotion)),
-                exit = slideOutHorizontally(motion<IntOffset>(reduceMotion)) { -it } + fadeOut(motion(reduceMotion)),
-                modifier = Modifier.align(Alignment.CenterStart),
+                enter = slideInVertically(motion<IntOffset>(reduceMotion)) { -it } + fadeIn(motion(reduceMotion)),
+                exit = slideOutVertically(motion<IntOffset>(reduceMotion)) { -it } + fadeOut(motion(reduceMotion)),
+                modifier = Modifier.align(Alignment.TopCenter),
             ) {
-                Toolbar(vm, vertical = true)
+                Header(vm)
             }
-        } else {
-            AnimatedVisibility(
-                visible = !vm.focusMode,
-                enter = slideInVertically(motion<IntOffset>(reduceMotion)) { it } + fadeIn(motion(reduceMotion)),
-                exit = slideOutVertically(motion<IntOffset>(reduceMotion)) { it } + fadeOut(motion(reduceMotion)),
-                modifier = Modifier.align(Alignment.BottomCenter),
-            ) {
-                Toolbar(vm, vertical = false)
-            }
-        }
 
-        // With a screen reader on, the exit control stays reachable instead of fading away.
-        AnimatedVisibility(
-            visible = vm.focusMode && (vm.islandVisible || screenReaderOn),
-            enter = fadeIn(motion(reduceMotion)),
-            exit = fadeOut(motion(reduceMotion)),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .windowInsetsPadding(WindowInsets.displayCutout)
-                .padding(top = 4.dp),
-        ) {
-            Island(vm, reduceMotion)
+            if (sideToolbar) {
+                AnimatedVisibility(
+                    visible = !vm.focusMode,
+                    enter = slideInHorizontally(motion<IntOffset>(reduceMotion)) { -it } + fadeIn(motion(reduceMotion)),
+                    exit = slideOutHorizontally(motion<IntOffset>(reduceMotion)) { -it } + fadeOut(motion(reduceMotion)),
+                    modifier = Modifier.align(Alignment.CenterStart),
+                ) {
+                    Toolbar(vm, vertical = true)
+                }
+            } else {
+                AnimatedVisibility(
+                    visible = !vm.focusMode,
+                    enter = slideInVertically(motion<IntOffset>(reduceMotion)) { it } + fadeIn(motion(reduceMotion)),
+                    exit = slideOutVertically(motion<IntOffset>(reduceMotion)) { it } + fadeOut(motion(reduceMotion)),
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                ) {
+                    Toolbar(vm, vertical = false)
+                }
+            }
+
+            // With a screen reader on, the exit control stays reachable instead of fading away.
+            AnimatedVisibility(
+                visible = vm.focusMode && (vm.islandVisible || screenReaderOn),
+                enter = fadeIn(motion(reduceMotion)),
+                exit = fadeOut(motion(reduceMotion)),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.displayCutout)
+                    .padding(top = 4.dp),
+            ) {
+                Island(vm, reduceMotion)
+            }
         }
     }
 }
@@ -200,22 +211,24 @@ private fun DrawingSurface(vm: CanvasViewModel) {
 
 @Composable
 private fun Header(vm: CanvasViewModel) {
+    val colors = MaterialTheme.colorScheme
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Tokens.Paper.copy(alpha = 0.94f))
+            .background(colors.surfaceContainer.copy(alpha = 0.94f))
             .drawBehind {
                 val h = 2.dp.toPx()
-                drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
+                drawRect(colors.onSurface, Offset(0f, size.height - h), Size(size.width, h))
             }
             .windowInsetsPadding(WindowInsets.displayCutout)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        BasicText(
+        Text(
             text = "ArCanvas",
-            style = TextStyle(color = Tokens.Ink, fontSize = 18.sp, fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            color = colors.onSurface,
             modifier = Modifier.semantics { heading() },
         )
         val shape = RoundedCornerShape(4.dp)
@@ -225,14 +238,15 @@ private fun Header(vm: CanvasViewModel) {
             modifier = Modifier
                 .heightIn(min = TouchMin)
                 .clip(shape)
-                .background(Tokens.Ink)
-                .border(2.dp, Tokens.Ink, shape),
+                .background(colors.primary)
+                .border(2.dp, colors.primary, shape),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            ringColor = Tokens.Paper,
+            ringColor = colors.onPrimary,
         ) {
-            BasicText(
+            Text(
                 text = "Focus",
-                style = TextStyle(color = Tokens.Paper, fontSize = 16.sp, fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = colors.onPrimary,
             )
         }
     }
@@ -240,6 +254,7 @@ private fun Header(vm: CanvasViewModel) {
 
 @Composable
 private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
+    val colors = MaterialTheme.colorScheme
     val shape: Shape = if (vertical) {
         RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp)
     } else {
@@ -256,7 +271,7 @@ private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
                     Modifier
                         .size(BrushSizes[vm.sizeIndex].dotDp.dp)
                         .clip(CircleShape)
-                        .background(Tokens.Ink),
+                        .background(colors.onSurface),
                 )
             }
         }
@@ -268,8 +283,8 @@ private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
                     Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(swatch.color)
-                        .border(2.dp, Tokens.Ink, CircleShape),
+                        .background(swatch.color ?: colors.onSurface)
+                        .border(2.dp, colors.onSurface, CircleShape),
                 )
             }
         }
@@ -298,13 +313,13 @@ private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
     Box(
         modifier = base
             .clip(shape)
-            .background(Tokens.Paper.copy(alpha = 0.96f))
+            .background(colors.surfaceContainer.copy(alpha = 0.96f))
             .drawBehind {
                 val t = 2.dp.toPx()
-                drawRect(Tokens.Ink, Offset.Zero, Size(size.width, t)) // top edge
+                drawRect(colors.onSurface, Offset.Zero, Size(size.width, t)) // top edge
                 if (vertical) {
-                    drawRect(Tokens.Ink, Offset(0f, size.height - t), Size(size.width, t)) // bottom edge
-                    drawRect(Tokens.Ink, Offset(size.width - t, 0f), Size(t, size.height)) // right edge
+                    drawRect(colors.onSurface, Offset(0f, size.height - t), Size(size.width, t)) // bottom edge
+                    drawRect(colors.onSurface, Offset(size.width - t, 0f), Size(t, size.height)) // right edge
                 }
             }
             .windowInsetsPadding(WindowInsets.displayCutout)
@@ -339,14 +354,13 @@ private fun ToolGroup(label: String, vertical: Boolean, content: @Composable () 
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            BasicText(
+            Text(
                 text = label.uppercase(),
-                style = TextStyle(
-                    color = Tokens.Soft,
-                    fontSize = 12.sp,
+                style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 0.8.sp,
                 ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             content()
         }
@@ -363,7 +377,7 @@ private fun Divider(vertical: Boolean) {
     Box(
         Modifier
             .size(width = if (vertical) 28.dp else 1.dp, height = if (vertical) 1.dp else 28.dp)
-            .background(Tokens.Edge),
+            .background(MaterialTheme.colorScheme.outline),
     )
 }
 
@@ -375,6 +389,7 @@ private fun Slot(
     selected: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(4.dp)
     Pressable(
         onClick = onClick,
@@ -383,19 +398,24 @@ private fun Slot(
         modifier = Modifier
             .size(TouchMin)
             .clip(shape)
-            .background(if (selected) Tokens.Paper2 else Tokens.Paper.copy(alpha = 0f))
-            .border(2.dp, if (selected) Tokens.Ink else Tokens.Edge, shape)
+            .background(if (selected) colors.secondaryContainer else Color.Transparent)
+            .border(2.dp, if (selected) colors.onSurface else colors.outline, shape)
             .drawBehind {
                 if (selected) {
                     val h = 4.dp.toPx()
-                    drawRect(Tokens.Ink, Offset(0f, size.height - h), Size(size.width, h))
+                    drawRect(colors.onSurface, Offset(0f, size.height - h), Size(size.width, h))
                 }
             },
-    ) { content() }
+    ) {
+        // Icons draw in the current content colour, so the selected tint pairs with its container.
+        val iconColor = if (selected) colors.onSecondaryContainer else colors.onSurface
+        CompositionLocalProvider(LocalContentColor provides iconColor) { content() }
+    }
 }
 
 @Composable
 private fun ActionButton(onClick: () -> Unit, description: String, content: @Composable () -> Unit) {
+    val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(4.dp)
     Pressable(
         onClick = onClick,
@@ -403,8 +423,10 @@ private fun ActionButton(onClick: () -> Unit, description: String, content: @Com
         modifier = Modifier
             .size(TouchMin)
             .clip(shape)
-            .border(2.dp, Tokens.Ink, shape),
-    ) { content() }
+            .border(2.dp, colors.onSurface, shape),
+    ) {
+        CompositionLocalProvider(LocalContentColor provides colors.onSurface) { content() }
+    }
 }
 
 // ───────────── Focus-mode island ─────────────
@@ -431,6 +453,7 @@ private fun Island(vm: CanvasViewModel, reduceMotion: Boolean) {
         label = "pulse-scale",
     )
     val reminder = vm.sessionPulse
+    val colors = MaterialTheme.colorScheme
 
     Pressable(
         onClick = vm::toggleFocus,
@@ -455,7 +478,7 @@ private fun Island(vm: CanvasViewModel, reduceMotion: Boolean) {
                     scaleY = s
                 }
                 .clip(RoundedCornerShape(8.dp))
-                .background(if (reminder) Tokens.Soft else Tokens.Ink),
+                .background(if (reminder) colors.onSurfaceVariant else colors.onSurface),
         )
     }
 }
