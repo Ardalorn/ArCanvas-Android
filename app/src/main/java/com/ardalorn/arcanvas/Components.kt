@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -49,7 +51,7 @@ fun Pressable(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
     stateText: String? = null,
-    ringColor: Color = Tokens.Ink,
+    ringColor: Color = MaterialTheme.colorScheme.onSurface,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val source = remember { MutableInteractionSource() }
@@ -94,14 +96,17 @@ fun Pressable(
     )
 }
 
-/** Draws one or more SVG paths as an outline icon, scaled from a square [viewBox] grid. */
+/**
+ * Draws one or more SVG paths as an outline icon, scaled from a square [viewBox] grid.
+ * The default [tint] is the current content colour, so an icon follows the Material You palette.
+ */
 @Composable
 fun PathIcon(
     pathData: List<String>,
     viewBox: Float,
     iconSize: Dp,
     strokeUnits: Float,
-    tint: Color = Tokens.Ink,
+    tint: Color = LocalContentColor.current,
 ) {
     val paths =
         remember(pathData) {
