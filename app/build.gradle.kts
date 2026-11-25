@@ -65,6 +65,14 @@ ktlint {
     filter {
         exclude("**/build/**")
     }
+    // Same rules as .editorconfig, repeated here so ktlint behaves the same even if that hidden file
+    // was not uploaded to the repo. Composable functions are PascalCase by convention.
+    additionalEditorconfig.set(
+        mapOf(
+            "ktlint_code_style" to "intellij_idea",
+            "ktlint_function_naming_ignore_when_annotated_with" to "Composable"
+        )
+    )
 }
 
 dependencies {
