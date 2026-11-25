@@ -1,0 +1,181 @@
+name: Release
+
+# One input, everything else is automatic.
+#
+#   Actions > Release > Run workflow > type the version (1.0.1 or v1.0.1) > Run.
+#
+# The workflow then:
+#   1. Applies ktlint fixes and commits them.
+#   2. Sets versionName to the version you typed and bumps versionCode by one, and commits that.
+#   3. Runs the strict ktlint check, builds the release APK, signs it and verifies the signature.
+#   4. Only if all of that worked: pushes the commits, creates the tag and publishes the GitHub release.
+#
+# If anything fails, nothing is pushed and no tag is created, so you can simply run it again.
+# A version containing a hyphen (for example 1.1.0-rc1) is published as a pre-release.
+# Run it from the branch you release from (normally main).
+# Needs these repository secrets: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, for example 1.0.1 or v1.0.1 (versionName and versionCode are updated for you)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: "17"
+  # Keep in sync with distributionUrl in gradle/wrapper/gradle-wrapper.properties.
+  GRADLE_VERSION: "8.7"
+  GRADLE_FILE: app/build.gradle.kts
+
+jobs:
+  release:
+    name: Version, build, sign and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BRANCH: ${{ github.ref_name }}
+      INPUT_VERSION: ${{ inputs.version }}
+
+    steps:
+      - name: Check this is a branch
+        if: github.ref_type != 'branch'
+        run: |
+          echo "::error::Run this workflow from a branch (normally main), not from a tag."
+          exit 1
+
+      - uses: actions/checkout@v7
+
+      - name: Work out the version and tag
+        run: |
+          version="${INPUT_VERSION#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::'${INPUT_VERSION}' is not a version like 1.0.1, v1.0.1 or 1.1.0-rc1."
+            exit 1
+          fi
+          tag="v${version}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" > /dev/null 2>&1; then
+            echo "::error::Tag ${tag} already exists. Pick a new version."
+            exit 1
+          fi
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          echo "TAG=${tag}" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Accept Android SDK licences
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing repository secret $name. A release must be signed."
+              exit 1
+            fi
+          done
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "ARCANVAS_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      # Step 1: auto-fix ktlint issues and keep the fixes.
+      - name: ktlint auto-fix
+        continue-on-error: true
+        run: gradle ktlintFormat --console=plain
+
+      - name: Commit ktlint fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add -A
+            git commit -m "Apply ktlint fixes"
+          else
+            echo "ktlint had nothing to fix."
+          fi
+
+      # Step 2: make versionName and versionCode match the release.
+      - name: Set versionName and versionCode
+        run: |
+          current_name=$(grep -oP 'versionName = "\K[^"]+' "$GRADLE_FILE")
+          current_code=$(grep -oP 'versionCode = \K[0-9]+' "$GRADLE_FILE")
+          if [ -z "$current_name" ] || [ -z "$current_code" ]; then
+            echo "::error::Could not find versionName and versionCode in ${GRADLE_FILE}."
+            exit 1
+          fi
+          if [ "$current_name" = "$VERSION" ]; then
+            echo "versionName is already ${VERSION}; leaving versionCode at ${current_code}."
+          else
+            new_code=$((current_code + 1))
+            echo "versionName ${current_name} -> ${VERSION}, versionCode ${current_code} -> ${new_code}"
+            sed -i -E "s/(versionName = \")[^\"]*\"/\1${VERSION}\"/; s/(versionCode = )[0-9]+/\1${new_code}/" "$GRADLE_FILE"
+          fi
+          grep -q "versionName = \"${VERSION}\"" "$GRADLE_FILE" || { echo "::error::versionName was not updated."; exit 1; }
+          if ! git diff --quiet; then
+            git add "$GRADLE_FILE"
+            git commit -m "Release ${TAG}"
+          fi
+
+      # Step 3: strict check, then build and sign.
+      - name: ktlint check
+        run: gradle ktlintCheck --console=plain
+
+      - name: Build signed release APK
+        env:
+          ARCANVAS_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          ARCANVAS_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ARCANVAS_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle assembleRelease --stacktrace --console=plain
+
+      - name: Verify the signature and name the files
+        run: |
+          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          "$apksigner" verify --print-certs "$apk"
+          mkdir -p dist
+          cp "$apk" "dist/ArCanvas-$TAG.apk"
+          (cd dist && sha256sum "ArCanvas-$TAG.apk" > "ArCanvas-$TAG.apk.sha256")
+          cat "dist/ArCanvas-$TAG.apk.sha256"
+
+      # Step 4: everything worked, so save the commits and publish. The tag is created by the release.
+      - name: Push the commits
+        run: git push origin "HEAD:refs/heads/${BRANCH}"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          case "$VERSION" in
+            *-*) flags+=(--prerelease) ;;
+          esac
+          gh release create "$TAG" \
+            "dist/ArCanvas-$TAG.apk" \
+            "dist/ArCanvas-$TAG.apk.sha256" \
+            --target "$(git rev-parse HEAD)" \
+            --title "ArCanvas $TAG" \
+            --generate-notes \
+            "${flags[@]}"
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"

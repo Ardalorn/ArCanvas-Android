@@ -1,0 +1,123 @@
+name: Build
+
+# On every push to main and every pull request:
+#   1. ktlint auto-fix: ktlintFormat rewrites what it can, and the fixes are committed back to the branch.
+#   2. ktlint check: strict. Anything ktlint cannot fix by itself stops the build here.
+#   3. Release APK: signed when the signing secrets exist, unsigned otherwise.
+#
+# Auto-fix needs write access, so it is skipped for pull requests from forks (those only get the check).
+# Commits pushed with the built-in token do not start a new workflow run; this run builds the fixed code.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "17"
+  # Keep in sync with distributionUrl in gradle/wrapper/gradle-wrapper.properties.
+  GRADLE_VERSION: "8.7"
+
+jobs:
+  build:
+    name: ktlint and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      CAN_PUSH: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Same-repo pull requests: check out the branch itself (not the merge ref) so fixes can be pushed to it.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref || '' }}
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      # Step 1: auto-fix what ktlint can fix, and save the fixes to the repo.
+      - name: ktlint auto-fix
+        if: env.CAN_PUSH == 'true'
+        continue-on-error: true
+        run: gradle ktlintFormat --console=plain
+
+      - name: Commit ktlint fixes
+        if: env.CAN_PUSH == 'true'
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "Apply ktlint fixes"
+            git push origin "HEAD:refs/heads/${BRANCH}"
+          else
+            echo "ktlint had nothing to fix."
+          fi
+
+      # Step 2: strict check. If anything is left, the build stops here.
+      - name: ktlint check
+        run: gradle ktlintCheck --console=plain
+
+      - name: Accept Android SDK licences
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Prepare signing key (optional)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ARCANVAS_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          else
+            echo "No signing key configured, so the release APK will be unsigned."
+          fi
+
+      # Step 3: build.
+      - name: Build release APK
+        env:
+          ARCANVAS_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          ARCANVAS_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          ARCANVAS_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle assembleRelease --stacktrace --console=plain
+
+      - name: Verify the APK signature
+        if: env.ARCANVAS_KEYSTORE_FILE != ''
+        run: |
+          apk=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          "$apksigner" verify --print-certs "$apk"
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: ArCanvas-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload ktlint reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ktlint-reports
+          path: "**/build/reports/ktlint/**"
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
