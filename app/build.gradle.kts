@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 android {
@@ -15,8 +16,23 @@ android {
         versionName = "1.0.0"
     }
 
+    // Release signing is read from the environment so no secret lives in the repository.
+    // CI provides it when the secrets are set. Without these variables the release APK is left unsigned.
+    val keystorePath = System.getenv("ARCANVAS_KEYSTORE_FILE")
+    if (!keystorePath.isNullOrBlank()) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("ARCANVAS_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ARCANVAS_KEY_ALIAS")
+                keyPassword = System.getenv("ARCANVAS_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
         }
     }
@@ -40,6 +56,14 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+ktlint {
+    outputToConsole.set(true)
+    ignoreFailures.set(false)
+    filter {
+        exclude("**/build/**")
     }
 }
 
