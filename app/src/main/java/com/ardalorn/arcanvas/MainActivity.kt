@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
             }
         hideSystemBars()
 
-        setContent { ArCanvasApp(canvasViewModel) }
+        setContent { ArCanvasTheme { ArCanvasApp(canvasViewModel) } }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
