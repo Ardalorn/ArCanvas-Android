@@ -14,6 +14,20 @@ compileSdk/targetSdk 34. These are versions that exist and work together, not ne
 latest. If Android Studio offers an upgrade, take it, but move Kotlin and the Compose compiler
 together.
 
+## Theme (Material 3 and Material You)
+
+- Material 3 (`androidx.compose.material3`, version from the Compose BOM) themes the whole app through
+  `ArCanvasTheme` in `Theme.kt`.
+- Material You dynamic colour is on by default on Android 12+ (API 31). There is no settings screen, so
+  there is no toggle; `DYNAMIC_COLOR` in `Tokens.kt` is a build-time switch only.
+- Android 10 and 11 (API 29 and 30) cannot do dynamic colour and use the original boilerplate-AA palette
+  (`Tokens`), mapped onto Material 3 roles. Its text pairs are above 7:1 and its borders above 4:1.
+- Still light only: the device's dark setting is ignored, as before.
+- The drawing paper, the "Ink" swatch and the saved PNG's background follow the palette. Strokes already
+  drawn keep the colour they were drawn in if the wallpaper changes later.
+- Controls are still the custom `Pressable` (44 dp targets, press scale, visible focus ring), now coloured
+  from Material 3 roles rather than fixed colours.
+
 ## Behaviour
 
 - Fullscreen, edge to edge, system bars hidden (swipe from an edge to peek at them; they hide again).
@@ -32,7 +46,8 @@ together.
 | `ArCanvasApp.kt` | Screen: drawing surface, header, toolbar, Focus-mode island, Back handling |
 | `Components.kt` | Pressable button, path icons |
 | `Stamps.kt` | The four stamp shapes |
-| `Tokens.kt` | Colours, brush sizes, timings |
+| `Theme.kt` | Material 3 theme: Material You colour, fallback palette |
+| `Tokens.kt` | Fallback palette, swatches, brush sizes, timings |
 
 ## CI and releases
 
