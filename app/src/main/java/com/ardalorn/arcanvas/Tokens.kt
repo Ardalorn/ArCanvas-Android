@@ -2,7 +2,16 @@ package com.ardalorn.arcanvas
 
 import androidx.compose.ui.graphics.Color
 
-/** Colour tokens, carried over from the web version's boilerplate-AA light theme. */
+/**
+ * Material You (dynamic colour) is always on where the device supports it (Android 12+). There is no
+ * settings screen, so this is a build-time switch, not a user setting.
+ */
+const val DYNAMIC_COLOR = true
+
+/**
+ * Fallback palette for Android 11 and older, carried over from the web version's boilerplate-AA light
+ * theme. [ArCanvasTheme] maps it onto Material 3 roles. On Android 12+ these are not used.
+ */
 object Tokens {
     val Paper = Color(0xFFEEF2EF)
     val Paper2 = Color(0xFFDEE7E2)
@@ -11,12 +20,15 @@ object Tokens {
     val Edge = Color(0xFF5B736A)
 }
 
-data class Swatch(val name: String, val color: Color)
+data class Swatch(val name: String, val color: Color?)
 
-/** First swatch is the theme ink; the rest are the fixed pastels from the web version. */
+/**
+ * First swatch is the theme ink (a null [Swatch.color], resolved from the Material You palette when drawn);
+ * the rest are the fixed pastels from the web version.
+ */
 val Swatches =
     listOf(
-        Swatch("Ink", Tokens.Ink),
+        Swatch("Ink", null),
         Swatch("Sage", Color(0xFF8FA882)),
         Swatch("Slate", Color(0xFF7B91A3)),
         Swatch("Terracotta", Color(0xFFC98B7A)),
