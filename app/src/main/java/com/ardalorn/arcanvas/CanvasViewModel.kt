@@ -16,7 +16,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -65,11 +64,6 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
 
     private var surface: Canvas? = null
     private var density = 1f
-
-    // Theme colours, set by the UI (which owns the Material You palette). Plain fields, not state:
-    // they are only read when a stroke is drawn or a picture is saved. The defaults are the fallback palette.
-    private var paperArgb = Tokens.Paper.toArgb()
-    private var inkArgb = Tokens.Ink.toArgb()
 
     private val strokePaint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -133,15 +127,6 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
         surface = freshCanvas
         bitmap = fresh
         version++
-    }
-
-    /** The theme's paper (saved PNG background) and ink (the "Ink" swatch), from the current palette. */
-    fun applyPalette(
-        paper: Color,
-        ink: Color,
-    ) {
-        paperArgb = paper.toArgb()
-        inkArgb = ink.toArgb()
     }
 
     // ───────────── Tool state ─────────────
@@ -228,12 +213,9 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
             strokePaint.color = android.graphics.Color.BLACK
         } else {
             strokePaint.xfermode = null
-            strokePaint.color = brushColor()
+            strokePaint.color = Swatches[colorIndex].color.toArgb()
         }
     }
-
-    /** The chosen swatch; the "Ink" swatch has no fixed colour and takes the theme's ink. */
-    private fun brushColor(): Int = Swatches[colorIndex].color?.toArgb() ?: inkArgb
 
     private fun placeStamp(
         c: Canvas,
@@ -249,7 +231,7 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
         c.rotate(jitterDegrees)
         c.scale(scale, scale)
         c.translate(-50f, -50f)
-        fillPaint.color = brushColor()
+        fillPaint.color = Swatches[colorIndex].color.toArgb()
         c.drawPath(def.path, fillPaint)
         c.drawPath(def.path, outlinePaint)
         drawStampDetail(c, def.name)
@@ -313,7 +295,7 @@ class CanvasViewModel(app: Application) : AndroidViewModel(app) {
         val source = bitmap ?: return
         val flat = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
         Canvas(flat).apply {
-            drawColor(paperArgb)
+            drawColor(Tokens.Paper.toArgb())
             drawBitmap(source, 0f, 0f, null)
         }
         val app = getApplication<Application>()
