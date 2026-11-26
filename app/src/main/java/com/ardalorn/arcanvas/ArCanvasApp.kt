@@ -1,6 +1,9 @@
 package com.ardalorn.arcanvas
 
+import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
+import android.content.ContextWrapper
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
@@ -96,6 +99,10 @@ fun ArCanvasApp(vm: CanvasViewModel) {
     // Focus mode: Back is swallowed so the app cannot be closed by accident. It wakes the
     // island instead, so the way out is always one glance away.
     BackHandler(enabled = vm.focusMode) { vm.ping() }
+
+    // Focus mode pins the app (Android screen pinning), which blocks the notification shade, quick settings
+    // and the swipe-up Home and Recents gestures. Leaving Focus mode, or the system unpinning, ends it.
+    LaunchedEffect(vm.focusMode) { context.findActivity()?.setPinned(vm.focusMode) }
 
     // The island fades out after a few idle seconds.
     LaunchedEffect(vm.islandVisible) {
@@ -476,5 +483,29 @@ private fun Island(vm: CanvasViewModel, reduceMotion: Boolean) {
                 .clip(RoundedCornerShape(8.dp))
                 .background(if (reminder) colors.onSurfaceVariant else colors.onSurface),
         )
+    }
+}
+
+// ───────────── Screen pinning ─────────────
+
+private tailrec fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
+
+/**
+ * Pins or unpins the app. Pinning shows the system's own confirmation the first time, and the person can
+ * still unpin with the system gesture (hold Back and Overview, or swipe up and hold). An app that is not a
+ * device owner cannot lock the device any harder than this.
+ */
+private fun Activity.setPinned(pinned: Boolean) {
+    val manager = getSystemService(ActivityManager::class.java) ?: return
+    val locked = manager.lockTaskModeState != ActivityManager.LOCK_TASK_MODE_NONE
+    if (pinned && !locked) {
+        startLockTask()
+    } else if (!pinned && locked) {
+        stopLockTask()
     }
 }
