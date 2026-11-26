@@ -12,7 +12,7 @@ ArCanvas is a free Android app for quick drawing. Pick a brush, the eraser or a 
 
 ### Draw
 
-- **Brush.** Choose from a set of colour swatches and brush sizes.
+- **Brush.** Choose from a set of low stimulation colour swatches and brush sizes.
 - **Eraser.** Rub out mistakes.
 - **Stamps.** Four stamp shapes for quick marks.
 - **Save as PNG.** Pictures are written to Pictures/ArCanvas. No permission is needed.
