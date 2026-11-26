@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Light only: the device's dark setting is ignored, as in the web version.
-         Compose paints the real Material You colours; this is only the window behind the first frame.
-         values-v31 swaps in the wallpaper-derived neutral on Android 12+. -->
+    <!-- Light only: the device's dark setting is ignored, as in the web version. -->
     <style name="Theme.ArCanvas" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/paper</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
