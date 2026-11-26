@@ -271,20 +271,19 @@ private fun cornerClearancePx(view: View, position: Int, offset: Float, margin: 
  * [controlTop] is the distance from the top of the screen to the top of the controls, and [alreadyPadded] is the
  * sideways padding the bar already has, which counts towards the clearance.
  */
-private fun Modifier.avoidTopRoundedCorners(view: View, controlTop: Dp, alreadyPadded: Dp): Modifier =
-    layout { measurable, constraints ->
-        val offset = controlTop.toPx()
-        val have = alreadyPadded.toPx()
-        val margin = CornerMargin.toPx()
-        val left = (cornerClearancePx(view, RoundedCorner.POSITION_TOP_LEFT, offset, margin) - have)
-            .coerceAtLeast(0f).roundToInt()
-        val right = (cornerClearancePx(view, RoundedCorner.POSITION_TOP_RIGHT, offset, margin) - have)
-            .coerceAtLeast(0f).roundToInt()
-        val placeable = measurable.measure(constraints.offset(horizontal = -(left + right)))
-        layout(constraints.constrainWidth(placeable.width + left + right), placeable.height) {
-            placeable.place(left, 0)
-        }
+private fun Modifier.avoidTopRoundedCorners(view: View, controlTop: Dp, alreadyPadded: Dp): Modifier = layout { measurable, constraints ->
+    val offset = controlTop.toPx()
+    val have = alreadyPadded.toPx()
+    val margin = CornerMargin.toPx()
+    val left = (cornerClearancePx(view, RoundedCorner.POSITION_TOP_LEFT, offset, margin) - have)
+        .coerceAtLeast(0f).roundToInt()
+    val right = (cornerClearancePx(view, RoundedCorner.POSITION_TOP_RIGHT, offset, margin) - have)
+        .coerceAtLeast(0f).roundToInt()
+    val placeable = measurable.measure(constraints.offset(horizontal = -(left + right)))
+    layout(constraints.constrainWidth(placeable.width + left + right), placeable.height) {
+        placeable.place(left, 0)
     }
+}
 
 @Composable
 private fun Header(vm: CanvasViewModel) {
