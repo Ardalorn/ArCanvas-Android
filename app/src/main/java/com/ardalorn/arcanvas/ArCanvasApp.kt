@@ -32,10 +32,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -73,9 +75,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.ViewCompat
 import kotlinx.coroutines.delay
 
 /** Instant when the user has animations turned off in system settings, a short tween otherwise. */
@@ -153,7 +157,9 @@ fun ArCanvasApp(vm: CanvasViewModel) {
                 exit = fadeOut(motion(reduceMotion)),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .windowInsetsPadding(WindowInsets.displayCutout)
+                    .windowInsetsPadding(
+                        WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
+                    )
                     .padding(top = 4.dp),
             ) {
                 Island(vm, reduceMotion)
@@ -212,9 +218,33 @@ private fun DrawingSurface(vm: CanvasViewModel) {
 
 // ───────────── Header and toolbar ─────────────
 
+/** How far the title and the Focus button reach in from each side of the header. */
+private const val HEADER_EDGE_ZONE_DP = 150
+
+/**
+ * Space to keep clear above the header for a camera cutout. A hole in the empty middle of the header, the usual
+ * place, needs no gap. A hole near a corner would sit behind the title or the Focus button, so it gets the full
+ * cutout height.
+ */
+@Composable
+private fun headerTopClearance(): Dp {
+    val view = LocalView.current
+    val density = LocalDensity.current
+    val widthDp = LocalConfiguration.current.screenWidthDp
+    val cutoutTop = WindowInsets.displayCutout.getTop(density)
+    return remember(cutoutTop, widthDp) {
+        val zone = HEADER_EDGE_ZONE_DP * density.density
+        val width = widthDp * density.density
+        val rects = ViewCompat.getRootWindowInsets(view)?.displayCutout?.boundingRects.orEmpty()
+        val behindContent = rects.any { it.top < cutoutTop && (it.left < zone || it.right > width - zone) }
+        if (cutoutTop > 0 && behindContent) with(density) { cutoutTop.toDp() } else 0.dp
+    }
+}
+
 @Composable
 private fun Header(vm: CanvasViewModel) {
     val colors = MaterialTheme.colorScheme
+    val topClearance = headerTopClearance()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,7 +253,8 @@ private fun Header(vm: CanvasViewModel) {
                 val h = 2.dp.toPx()
                 drawRect(colors.onSurface, Offset(0f, size.height - h), Size(size.width, h))
             }
-            .windowInsetsPadding(WindowInsets.displayCutout)
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
+            .padding(top = topClearance)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -312,6 +343,12 @@ private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
         }
     }
 
+    // Only the cutout edges this bar can actually touch. A bar at the bottom must not take the top cutout.
+    val cutoutSides = if (vertical) {
+        WindowInsetsSides.Start
+    } else {
+        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
+    }
     val base = if (vertical) Modifier else Modifier.fillMaxWidth()
     Box(
         modifier = base
@@ -325,7 +362,7 @@ private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
                     drawRect(colors.onSurface, Offset(size.width - t, 0f), Size(t, size.height)) // right edge
                 }
             }
-            .windowInsetsPadding(WindowInsets.displayCutout)
+            .windowInsetsPadding(WindowInsets.displayCutout.only(cutoutSides))
             .padding(
                 if (vertical) {
                     PaddingValues(horizontal = 10.dp, vertical = 18.dp)
