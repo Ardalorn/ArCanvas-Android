@@ -23,8 +23,9 @@ together.
 - Android 10 and 11 (API 29 and 30) cannot do dynamic colour and use the original boilerplate-AA palette
   (`Tokens`), mapped onto Material 3 roles. Its text pairs are above 7:1 and its borders above 4:1.
 - Still light only: the device's dark setting is ignored, as before.
-- The drawing paper, the "Ink" swatch and the saved PNG's background follow the palette. Strokes already
-  drawn keep the colour they were drawn in if the wallpaper changes later.
+- The canvas paper, the "Ink" brush colour and the saved PNG's background are fixed (`Tokens.Paper` and
+  `Tokens.Ink`) and never change with Material You. Only the interface on top (header, toolbar, buttons,
+  Focus pill) follows the palette.
 - Controls are still the custom `Pressable` (44 dp targets, press scale, visible focus ring), now coloured
   from Material 3 roles rather than fixed colours.
 
