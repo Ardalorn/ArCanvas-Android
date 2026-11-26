@@ -4,9 +4,12 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.Build
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
+import android.view.RoundedCorner
+import android.view.View
 import android.view.accessibility.AccessibilityManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -66,6 +69,7 @@ import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -78,9 +82,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.offset
 import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /** Instant when the user has animations turned off in system settings, a short tween otherwise. */
 private fun <T> motion(reduce: Boolean): FiniteAnimationSpec<T> = if (reduce) snap() else tween(450)
@@ -241,10 +248,51 @@ private fun headerTopClearance(): Dp {
     }
 }
 
+/** Gap kept between a control and the curve of a rounded display corner. */
+private val CornerMargin = 8.dp
+
+/**
+ * Distance in px that a control must keep from the side edge so it stays inside the rounded display corner at
+ * [position]. [offset] is how far the control sits from the top or bottom edge. Below Android 12 the system does not
+ * report corner radii, so no extra space is added there.
+ */
+private fun cornerClearancePx(view: View, position: Int, offset: Float, margin: Float): Float {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return 0f
+    val radius = view.rootWindowInsets?.getRoundedCorner(position)?.radius?.toFloat() ?: return 0f
+    if (offset >= radius) return 0f
+    val rise = radius - offset
+    return radius - sqrt(radius * radius - rise * rise) + margin
+}
+
+/**
+ * Pads a full-width bar sideways so that controls at its ends are not clipped by the rounded top corners of the
+ * display. The display cutout insets only cover camera holes, never the screen's own corners.
+ *
+ * [controlTop] is the distance from the top of the screen to the top of the controls, and [alreadyPadded] is the
+ * sideways padding the bar already has, which counts towards the clearance.
+ */
+private fun Modifier.avoidTopRoundedCorners(view: View, controlTop: Dp, alreadyPadded: Dp): Modifier =
+    layout { measurable, constraints ->
+        val offset = controlTop.toPx()
+        val have = alreadyPadded.toPx()
+        val margin = CornerMargin.toPx()
+        val left = (cornerClearancePx(view, RoundedCorner.POSITION_TOP_LEFT, offset, margin) - have)
+            .coerceAtLeast(0f).roundToInt()
+        val right = (cornerClearancePx(view, RoundedCorner.POSITION_TOP_RIGHT, offset, margin) - have)
+            .coerceAtLeast(0f).roundToInt()
+        val placeable = measurable.measure(constraints.offset(horizontal = -(left + right)))
+        layout(constraints.constrainWidth(placeable.width + left + right), placeable.height) {
+            placeable.place(left, 0)
+        }
+    }
+
 @Composable
 private fun Header(vm: CanvasViewModel) {
     val colors = MaterialTheme.colorScheme
     val topClearance = headerTopClearance()
+    val view = LocalView.current
+    val padHorizontal = 14.dp
+    val padVertical = 10.dp
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -254,8 +302,9 @@ private fun Header(vm: CanvasViewModel) {
                 drawRect(colors.onSurface, Offset(0f, size.height - h), Size(size.width, h))
             }
             .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
+            .avoidTopRoundedCorners(view, controlTop = topClearance + padVertical, alreadyPadded = padHorizontal)
             .padding(top = topClearance)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = padHorizontal, vertical = padVertical),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
