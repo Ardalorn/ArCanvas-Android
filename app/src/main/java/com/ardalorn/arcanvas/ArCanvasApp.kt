@@ -45,7 +45,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -106,11 +105,8 @@ fun ArCanvasApp(vm: CanvasViewModel) {
         }
     }
 
-    // The drawing's "Ink" swatch and the saved PNG's paper follow the Material You palette.
-    val colors = MaterialTheme.colorScheme
-    SideEffect { vm.applyPalette(paper = colors.background, ink = colors.onSurface) }
-
-    Surface(Modifier.fillMaxSize(), color = colors.background, contentColor = colors.onBackground) {
+    // The canvas paper is fixed (Tokens.Paper); only the interface on top of it follows Material You.
+    Surface(Modifier.fillMaxSize(), color = Tokens.Paper, contentColor = MaterialTheme.colorScheme.onSurface) {
         Box(Modifier.fillMaxSize()) {
             DrawingSurface(vm)
 
@@ -283,7 +279,7 @@ private fun Toolbar(vm: CanvasViewModel, vertical: Boolean) {
                     Modifier
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(swatch.color ?: colors.onSurface)
+                        .background(swatch.color)
                         .border(2.dp, colors.onSurface, CircleShape),
                 )
             }
