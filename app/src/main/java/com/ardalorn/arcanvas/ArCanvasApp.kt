@@ -488,12 +488,11 @@ private fun Island(vm: CanvasViewModel, reduceMotion: Boolean) {
 
 // ───────────── Screen pinning ─────────────
 
-private tailrec fun Context.findActivity(): Activity? =
-    when (this) {
-        is Activity -> this
-        is ContextWrapper -> baseContext.findActivity()
-        else -> null
-    }
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
 
 /**
  * Pins or unpins the app. Pinning shows the system's own confirmation the first time, and the person can
