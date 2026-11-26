@@ -12,7 +12,7 @@ ArCanvas is a lightweight, free Android app made for quick sketching and doodlin
 ## Features
 
 * **Simple, Kid-Friendly Tools:** Choose from low-stimulation colour swatches, adjust brush sizes, fix mistakes with the eraser, or drop in four different stamp shapes for quick marks.
-* **Focus Mode:** Prevents accidental exits by blocking the Back button and gestures while drawing. Pressing Back wakes a subtle on-screen pill—tap it when you're ready to exit.
+* **Focus Mode:** Prevents accidental exits by blocking the Back button and gestures while drawing. Pressing Back wakes a subtle on-screen pill; tap it when you're ready to exit.
 * **Distraction-Free Canvas:** Runs fullscreen and edge-to-edge (swipe from the screen edge to peek at system bars). Artwork and Focus mode stay intact even if the screen rotates.
 * **Adapts to Your Phone:** Uses Material You dynamic colours on Android 12+ for the interface, and a high-contrast accessible palette on Android 10 and 11. The paper and ink colours always stay consistent.
 * **Private & Accessible:** Large 44 dp touch targets, no analytics, no internet connection required, and zero device permissions requested.
@@ -22,7 +22,7 @@ ArCanvas is a lightweight, free Android app made for quick sketching and doodlin
 ## How to Use
 
 1. **Download & Install** the APK from the [Releases](https://github.com/Ardalorn/ArCanvas-Android/releases) page *(requires Android 10 or newer)*.
-2. **Open & Draw:** The canvas fills your screen immediately—just pick a tool and start sketching.
+2. **Open & Draw:** The canvas fills your screen immediately, so just pick a tool and start sketching.
 3. **Save:** Tap **Save** to export your picture as a PNG directly to `Pictures/ArCanvas` on your device.
 
 ---
